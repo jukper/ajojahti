@@ -19,12 +19,75 @@ class Ajojahti:
         self.alas = False
         self.luo_laatikot()
         self.luo_hahmot()
+        self.pisteet = 0
         # self.tarkista()
         # self.liiku()
         # self.piirra()
         self.valot_paalla = False
         self.aarre_loydetty = False
+        self.fontti = pygame.font.SysFont("Arial", 24)
+        pygame.display.set_caption("Ajojahti!")
+        self.aloitusruutu()
         self.silmukka()
+
+    def aloitusruutu(self):
+        aloita = False
+        lopeta = False
+        komento_ok = False
+        while not komento_ok:
+            self.naytto.fill((0, 0, 0))
+            teksti = self.fontti.render("F2: Aloita peli. ESC: lopeta peli", True, (255, 0, 0))
+            self.naytto.blit(teksti, (200, 200))
+            for tapahtuma in pygame.event.get():
+                if tapahtuma.type == pygame.KEYDOWN:
+                    if tapahtuma.key == pygame.K_F2:
+                        aloita = True
+                        komento_ok = True
+                    if tapahtuma.key == pygame.K_ESCAPE:
+                        lopeta = True
+                        komento_ok = True
+            pygame.display.flip()
+        if aloita:
+            return
+        if lopeta:
+            exit()
+
+    def uusi_peli(self):
+        aloita = False
+        lopeta = False
+        komento_ok = False
+        while not komento_ok:
+            self.naytto.fill((0, 0, 0))
+            teksti = self.fontti.render("F2: Uusi peli. ESC: lopeta peli", True, (255, 0, 0))
+            self.naytto.blit(teksti, (200, 200))
+            for tapahtuma in pygame.event.get():
+                if tapahtuma.type == pygame.KEYDOWN:
+                    if tapahtuma.key == pygame.K_F2:
+                        aloita = True
+                        komento_ok = True
+                    if tapahtuma.key == pygame.K_ESCAPE:
+                        lopeta = True
+                        komento_ok = True
+            pygame.display.flip()
+        if aloita:
+            self.oikealle = False
+            self.vasemmalle = False
+            self.ylos = False
+            self.alas = False
+            self.pisteet = 0
+            self.uusi_huone()
+        if lopeta:
+            exit()
+
+
+
+    def uusi_huone(self):
+        print("pisteitä:", self.pisteet)
+        self.valot_paalla = False
+        self.aarre_loydetty = False
+        self.luo_laatikot()
+        self.luo_hahmot()
+
 
     def lataa_kuvat(self):
         self.hirvio = pygame.image.load("hirvio.png")
@@ -52,7 +115,7 @@ class Ajojahti:
         mitta = self.leveys / 16
         vara = (self.robo_mitat[0] + 10, self.robo_mitat[1] + 1)
         self.laatikot = []
-        laatikot_mitat = [(2, 2), (3, 2), (2, 3), (1, 2), (1, 1), (3,0.5), (0.5, 4)]
+        laatikot_mitat = [ (3, 2), (2, 4), (1, 1), (3,0.5), (0.5, 4), (1.5, 1.5)]
 
         for n in range(len(laatikot_mitat)):
             while len(self.laatikot) < n + 1:
@@ -277,9 +340,21 @@ class Ajojahti:
                 self.aarre.pop(0)
                 self.uloskaynti[1] = True
                 print("Kolikko saatu! Sitten ulko-ovelle.")
+
+        # Onko pelaaja päässyt ovelle saatuaan aarteen?
+        if self.uloskaynti[1]:
+            if self.robo.get_rect(topleft=self.pelaaja[0]).colliderect(self.ovi.get_rect(topleft=self.uloskaynti[0])):
+                self.pisteet += 1
+                self.uusi_huone()
+
+
         nahty = 0
         for morko in self.morot:
-
+            
+            # Onko robo napattu?
+            if self.hirvio.get_rect(topleft=morko[0]).colliderect(self.robo.get_rect(topleft=self.pelaaja[0])):
+                print("Peli loppui!")
+                self.uusi_peli()
             morko[1] = False
             osumia = False
             katsevektori = self.katse(morko[0])
@@ -338,7 +413,16 @@ class Ajojahti:
                 self.naytto.blit(self.hirvio, (morko[0][0], morko[0][1]))
                 if morko[1]:
                     viiva = self.katse(morko[0])
-                    pygame.draw.line(self.naytto, (0, 0, 255), viiva[0], viiva[1])
+                    pygame.draw.line(self.naytto, (255, 0, 0), viiva[0], viiva[1])
+            teksti1 = self.fontti.render(f'Pisteitä: {self.pisteet}', True, (255, 0, 0))
+
+            if self.uloskaynti[1]:
+                teksti2 = self.fontti.render(f'Pakene huoneesta!', True, (255, 0, 0))
+            else:
+                teksti2 = self.fontti.render(f'Etsi aarre.', True, (255, 0, 0))
+            self.naytto.blit(teksti1, (self.leveys - teksti1.get_width(), 0))
+            self.naytto.blit(teksti2, (self.leveys - teksti2.get_width(), self.korkeus - teksti2.get_height()))
+
                 # print(f'Mörön sijainti: {morko[0]}, mörön kohde{morko[2]}')
 
 
@@ -401,6 +485,5 @@ class Ajojahti:
 
             pygame.display.flip()
             self.kello.tick(60)
-
 
 peli = Ajojahti()
