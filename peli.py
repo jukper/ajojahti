@@ -9,7 +9,7 @@ class Ajojahti:
         self.lataa_kuvat()
         self.leveys = 1280
         self.korkeus = 720
-        self.robonopeus = 2
+        self.robonopeus = 2.2
         self.etsi_nopeus = 1
         self.jahtaa_nopeus = 2
         self.naytto = pygame.display.set_mode((self.leveys, self.korkeus))
@@ -23,6 +23,7 @@ class Ajojahti:
         # self.liiku()
         # self.piirra()
         self.valot_paalla = False
+        self.aarre_loydetty = False
         self.silmukka()
 
     def lataa_kuvat(self):
@@ -51,7 +52,7 @@ class Ajojahti:
         mitta = self.leveys / 16
         vara = (self.robo_mitat[0] + 10, self.robo_mitat[1] + 1)
         self.laatikot = []
-        laatikot_mitat = [(2, 2), (3, 2), (2, 3), (1, 2), (1, 1)]
+        laatikot_mitat = [(2, 2), (3, 2), (2, 3), (1, 2), (1, 1), (3,0.5), (0.5, 4)]
 
         for n in range(len(laatikot_mitat)):
             while len(self.laatikot) < n + 1:
@@ -66,6 +67,8 @@ class Ajojahti:
     def luo_hahmot(self):
         self.pelaaja = []
         self.morot = []
+        self.uloskaynti = []
+        self.aarre = []
         morkoja = 3
 
         pelaaja_valmis = False
@@ -92,22 +95,43 @@ class Ajojahti:
                 if osumia:
                     self.morot.append([[x, y], False, self.etsi([x, y])])  # Tallennetaan möröistä sijainti, näön lähtöpiste sekä viimeisenä tieto, onko mörkö havainnut robon (True = näkee, False = ei näe)
 
+        aarre_valmis = False
+        while not aarre_valmis:
+            x = randrange(0, self.leveys - self.kolikko_mitat[0])
+            y = randrange(0, self.korkeus - self.kolikko_mitat[1])
+            if not self.kolikko.get_rect(topleft=[x, y]).collidelistall(self.laatikot):
+                self.aarre.append([x, y])
+                aarre_valmis = True
+
+        uloskaynti_valmis = False
+        while not uloskaynti_valmis:
+            x = randrange(0, self.leveys - self.ovi_mitat[0])
+            y = randrange(0, self.korkeus - self.ovi_mitat[1])
+            if not self.ovi.get_rect(topleft=[x, y]).collidelistall(self.laatikot):
+                self.uloskaynti.append([x, y])
+                self.uloskaynti.append(False)
+                uloskaynti_valmis = True
+
 
     def liiku(self):
 
         # Ensin pelaajan liike
 
         if self.oikealle and self.pelaaja[0][0] + self.robo_mitat[0] + self.robonopeus <= self.leveys:
-            self.pelaaja[0][0] += self.robonopeus
+            if self.robo.get_rect(topleft=[self.pelaaja[0][0] + self.robonopeus, self.pelaaja[0][1]]).collidelist(self.laatikot) < 0:
+                self.pelaaja[0][0] += self.robonopeus
 
         if self.vasemmalle and self.pelaaja[0][0] >= self.robonopeus:
-            self.pelaaja[0][0] -= self.robonopeus
+            if self.robo.get_rect(topleft=[self.pelaaja[0][0] - self.robonopeus, self.pelaaja[0][1]]).collidelist(self.laatikot) < 0:
+                self.pelaaja[0][0] -= self.robonopeus
 
         if self.alas and self.pelaaja[0][1] + self.robo_mitat[1] + self.robonopeus <= self.korkeus:
-            self.pelaaja[0][1] += self.robonopeus
+            if self.robo.get_rect(topleft=[self.pelaaja[0][0], self.pelaaja[0][1] + self.robonopeus]).collidelist(self.laatikot) < 0:
+                self.pelaaja[0][1] += self.robonopeus
 
         if self.ylos and self.pelaaja[0][1] >= self.robonopeus:
-            self.pelaaja[0][1] -= self.robonopeus
+            if self.robo.get_rect(topleft=[self.pelaaja[0][0], self.pelaaja[0][1] - self.robonopeus]).collidelist(self.laatikot) < 0:
+                self.pelaaja[0][1] -= self.robonopeus
 
         # Sitten mörköjen liike
 
@@ -130,8 +154,8 @@ class Ajojahti:
             # morko[0][0] = tarkistettu_x
             # morko[0][1] = tarkistettu_y
 
-            if morko[1]:
-                nopeus = 2.5
+            if morko[1] or self.uloskaynti[1]:
+                nopeus = 2
             else:
                 nopeus = 1
 
@@ -245,6 +269,14 @@ class Ajojahti:
 
 
     def tarkista(self):
+
+        # Onko kolikko napattu?
+
+        if len(self.aarre) > 0:
+            if self.robo.get_rect(topleft=self.pelaaja[0]).colliderect(self.kolikko.get_rect(topleft=self.aarre[0])):
+                self.aarre.pop(0)
+                self.uloskaynti[1] = True
+                print("Kolikko saatu! Sitten ulko-ovelle.")
         nahty = 0
         for morko in self.morot:
 
@@ -276,6 +308,10 @@ class Ajojahti:
 
     def valot(self):
 
+        if self.uloskaynti[1]:
+            self.valot_paalla = True
+            return
+
         self.valot_paalla = False
         if self.pelaaja[1]:
             self.valot_paalla = True
@@ -290,6 +326,9 @@ class Ajojahti:
     def piirra(self):
             if self.valot_paalla:
                 self.naytto.fill((255, 255, 255))
+                if len(self.aarre) > 0:
+                    self.naytto.blit(self.kolikko, self.aarre[0])
+                self.naytto.blit(self.ovi, self.uloskaynti[0])
             else:
                 self.naytto.fill((0, 0, 0))
             for laatikko in self.laatikot:
@@ -300,7 +339,7 @@ class Ajojahti:
                 if morko[1]:
                     viiva = self.katse(morko[0])
                     pygame.draw.line(self.naytto, (0, 0, 255), viiva[0], viiva[1])
-                print(f'Mörön sijainti: {morko[0]}, mörön kohde{morko[2]}')
+                # print(f'Mörön sijainti: {morko[0]}, mörön kohde{morko[2]}')
 
 
     def etsi(self, sijainti: list):
