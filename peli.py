@@ -1,5 +1,5 @@
 import pygame
-from random import randrange
+from random import randrange, choice
 from math import sqrt
 
 class Ajojahti:
@@ -62,11 +62,11 @@ class Ajojahti:
                     continue
                 laatikko.inflate_ip(-vara[0] * 2, -vara[1] * 2)
                 self.laatikot.append(laatikko)
-                print(laatikko.x)
 
     def luo_hahmot(self):
         self.pelaaja = []
         self.morot = []
+        morkoja = 3
 
         pelaaja_valmis = False
 
@@ -78,7 +78,7 @@ class Ajojahti:
                     self.pelaaja = [[x, y], False]  # Robon tiedot sisältävät sijainnin sekä keskipisteen, josta mitataan, onko möröillä näköyhteys roboon.
                     pelaaja_valmis = True
 
-        while len(self.morot) < 2:
+        while len(self.morot) < morkoja:
             x = randrange(0, self.leveys - self.hirvio_mitat[0])
             y = randrange(0, self.korkeus - self.hirvio_mitat[1])
 
@@ -97,16 +97,16 @@ class Ajojahti:
 
         # Ensin pelaajan liike
 
-        if self.oikealle:
+        if self.oikealle and self.pelaaja[0][0] + self.robo_mitat[0] + self.robonopeus <= self.leveys:
             self.pelaaja[0][0] += self.robonopeus
 
-        if self.vasemmalle:
+        if self.vasemmalle and self.pelaaja[0][0] >= self.robonopeus:
             self.pelaaja[0][0] -= self.robonopeus
 
-        if self.alas:
+        if self.alas and self.pelaaja[0][1] + self.robo_mitat[1] + self.robonopeus <= self.korkeus:
             self.pelaaja[0][1] += self.robonopeus
 
-        if self.ylos:
+        if self.ylos and self.pelaaja[0][1] >= self.robonopeus:
             self.pelaaja[0][1] -= self.robonopeus
 
         # Sitten mörköjen liike
@@ -119,10 +119,50 @@ class Ajojahti:
                 if sqrt((morko[2][0] - morko[0][0]) ** 2 + (morko[2][1] - morko[0][1]) ** 2) < 10:
                     morko[2] = self.etsi(morko[0])
 
-            # Katsotaan reitti robon luo
+            # Katsotaan reitti kohteen luo
             askeleet = max(abs(morko[2][0] - morko[0][0]), abs(morko[2][1] - morko[0][1]))
-            morko[0][0] += float(morko[2][0] - morko[0][0]) / askeleet
-            morko[0][1] += float(morko[2][1] - morko[0][1]) / askeleet
+
+            # uusi_x = morko[0][0] + float(morko[2][0] - morko[0][0]) / askeleet
+            # uusi_y = morko[0][1] + float(morko[2][1] - morko[0][1]) / askeleet
+
+            # tarkistettu_x, tarkistettu_y = self.osumakorjaus(self.hirvio.get_rect(topleft=[uusi_x, uusi_y]))
+
+            # morko[0][0] = tarkistettu_x
+            # morko[0][1] = tarkistettu_y
+
+            if morko[1]:
+                nopeus = 2.5
+            else:
+                nopeus = 1
+
+            morko[0][0] += float(morko[2][0] - morko[0][0]) / askeleet * nopeus
+            morko[0][1] += float(morko[2][1] - morko[0][1]) / askeleet * nopeus
+
+
+
+            ## Ei törmätä laatikkoon
+
+            self.osumakorjaus(morko)
+
+
+            # Varmistetaan, ettei mörkö törmää laatikkoon:
+
+            # osumakynnys = 3
+            # osumalaatikko = self.hirvio.get_rect(topleft=morko[0])
+
+            # for n in osumalaatikko.collidelistall(self.laatikot):
+            #     print("Törmäys")
+            #     if abs(self.laatikot[n].left - osumalaatikko.right) < osumakynnys:
+            #         morko[2][0] = self.laatikot[n].left - self.hirvio_mitat[0] - osumakynnys
+
+            #     if abs(self.laatikot[n].right - osumalaatikko.left) < osumakynnys:
+            #         morko[2][0] = self.laatikot[n].right + osumakynnys
+
+            #     if abs(self.laatikot[n].top - osumalaatikko.bottom) < osumakynnys:
+            #         morko[2][1] = self.laatikot[n].top - self.hirvio_mitat[1] - osumakynnys
+
+            #     if abs(self.laatikot[n].bottom - osumalaatikko.top) < osumakynnys:
+            #         morko[2][1] = self.laatikot[n].bottom + osumakynnys
 
 
     def katse(self, morko_sijainti: list):
@@ -131,13 +171,89 @@ class Ajojahti:
         return [robon_piste, moron_piste]
 
 
+    def osumakorjaus(self, morko: list):
+
+        osumalaatikko = self.hirvio.get_rect(topleft=morko[0])
+
+        osumakynnys = 5
+        x = osumalaatikko.x
+        y = osumalaatikko.y
+
+        for n in osumalaatikko.collidelistall(self.laatikot):
+            if abs(self.laatikot[n].left - osumalaatikko.right) < osumakynnys:
+                x = self.laatikot[n].left - osumalaatikko.w - osumakynnys
+                morko[2][1] = morko[0][1] + choice([10, -10])
+
+
+
+                # if morko[2][1] - morko[0][1] < 0:
+                #     morko[2][1] = self.laatikot[n].top - osumalaatikko.h - osumakynnys * 2
+
+                # if morko[2][1] - morko[0][1] > 0:
+                #     morko[2][1] = self.laatikot[n].bottom + osumalaatikko.h + osumakynnys * 2
+
+                # else:
+                #     if abs(self.laatikot[n].top - morko[2][1]) >= abs(self.laatikot[n].bottom -morko[2][1]):
+                #         morko[2][1] = self.laatikot[n].top - osumalaatikko.h - osumakynnys * 2
+                #     else:
+                #         morko[2][1] = self.laatikot[n].bottom + osumalaatikko.h + osumakynnys * 2
+
+
+            if abs(self.laatikot[n].right - osumalaatikko.left) < osumakynnys:
+                x = self.laatikot[n].right + osumakynnys
+                morko[2][1] = morko[0][1] + choice([10, -10])
+
+
+                # if morko[2][1] - morko[0][1] < 0:
+                #     morko[2][1] = self.laatikot[n].top - osumalaatikko.h - osumakynnys * 2
+
+                # if morko[2][1] - morko[0][1] > 0:
+                #     morko[2][1] = self.laatikot[n].bottom + osumalaatikko.h + osumakynnys * 2
+
+                # else:
+                #     if abs(self.laatikot[n].top - morko[2][1]) >= abs(self.laatikot[n].bottom -morko[2][1]):
+                #         morko[2][1] = self.laatikot[n].top - osumalaatikko.h - osumakynnys * 2
+                #     else:
+                #         morko[2][1] = self.laatikot[n].bottom + osumalaatikko.h + osumakynnys * 2
+
+
+
+            if abs(self.laatikot[n].top - osumalaatikko.bottom) < osumakynnys:
+                y = self.laatikot[n].top - osumalaatikko.h - osumakynnys
+                morko[2][0] = morko[0][0] + choice([10, -10])
+                # if morko[2][0] - morko[0][0] > 0:
+                #     morko[2][0] = self.laatikot[n].right + osumalaatikko.w + osumakynnys *2
+                # else:
+                #     morko[2][0] = self.laatikot[n].left - osumalaatikko.w - osumakynnys * 2
+
+
+            if abs(self.laatikot[n].bottom - osumalaatikko.top) < osumakynnys:
+                y = self.laatikot[n].bottom + osumakynnys
+                morko[2][0] = morko[0][0] + choice([10, -10])
+                # if morko[2][0] - morko[0][0] > 0:
+                #     morko[2][0] = self.laatikot[n].right + osumalaatikko.w + osumakynnys * 2
+                # else:
+                #     morko[2][0] = self.laatikot[n].left - osumalaatikko.w - osumakynnys * 2
+
+        morko[0][0] = x
+        morko[0][1] = y
+
+
+        return morko
+    
+
+
 
     def tarkista(self):
         nahty = 0
         for morko in self.morot:
+
             morko[1] = False
             osumia = False
             katsevektori = self.katse(morko[0])
+
+            # Katsotaan, onko möröllä näkesteitä
+
             for laatikko in self.laatikot:
                 if laatikko.clipline(katsevektori[0], katsevektori[1]):
                     osumia = True
@@ -146,6 +262,7 @@ class Ajojahti:
                 morko[1] = True
                 nahty += 1
             # print("Näkeekö mörkö: ", morko[4])
+
 
         if nahty > 0:
             self.pelaaja[1] = True
@@ -179,11 +296,11 @@ class Ajojahti:
                 pygame.draw.rect(self.naytto, (255, 0, 0), laatikko)
             self.naytto.blit(self.robo, (self.pelaaja[0][0], self.pelaaja[0][1]))
             for morko in self.morot:
-                print(morko)
                 self.naytto.blit(self.hirvio, (morko[0][0], morko[0][1]))
                 if morko[1]:
                     viiva = self.katse(morko[0])
                     pygame.draw.line(self.naytto, (0, 0, 255), viiva[0], viiva[1])
+                print(f'Mörön sijainti: {morko[0]}, mörön kohde{morko[2]}')
 
 
     def etsi(self, sijainti: list):
@@ -238,8 +355,8 @@ class Ajojahti:
                     if tapahtuma.key == pygame.K_DOWN:
                         self.alas = False
 
-            self.liiku()
             self.tarkista()
+            self.liiku()
             self.valot()
             self.piirra()
 
