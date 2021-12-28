@@ -37,8 +37,10 @@ class Ajojahti:
         while not komento_ok:
             self.naytto.fill((0, 0, 0))
             teksti = self.fontti.render("F2: Aloita peli. ESC: lopeta peli", True, (255, 0, 0))
-            self.naytto.blit(teksti, (200, 200))
+            self.naytto.blit(teksti, (self.leveys / 2 - teksti.get_width() / 2, self.korkeus / 2 - teksti.get_height() / 2))
             for tapahtuma in pygame.event.get():
+                if tapahtuma.type == pygame.QUIT:
+                    exit()
                 if tapahtuma.type == pygame.KEYDOWN:
                     if tapahtuma.key == pygame.K_F2:
                         aloita = True
@@ -58,9 +60,13 @@ class Ajojahti:
         komento_ok = False
         while not komento_ok:
             self.naytto.fill((0, 0, 0))
-            teksti = self.fontti.render("F2: Uusi peli. ESC: lopeta peli", True, (255, 0, 0))
-            self.naytto.blit(teksti, (200, 200))
+            teksti1 = self.fontti.render(f'Jäit kiinni. Pistemääräsi: {self.pisteet}', True, (255, 0, 0))
+            teksti2 = self.fontti.render("F2: Uusi peli. ESC: lopeta peli", True, (255, 0, 0))
+            self.naytto.blit(teksti1, (self.leveys / 2 - teksti1.get_width() / 2, self.korkeus / 2 - (teksti1.get_height() + 10 + teksti2.get_height()) / 2 ))
+            self.naytto.blit(teksti2, (self.leveys / 2 - teksti2.get_width() / 2, self.korkeus / 2 - teksti2.get_height() / 2 + 20))
             for tapahtuma in pygame.event.get():
+                if tapahtuma.type == pygame.QUIT:
+                    exit()
                 if tapahtuma.type == pygame.KEYDOWN:
                     if tapahtuma.key == pygame.K_F2:
                         aloita = True
@@ -105,7 +111,7 @@ class Ajojahti:
 
     def luo_laatikot(self):
 
-        #  Pelissä on näköesteenä viisi erikokoista laatikkoa, jotka sijoitetaan sattumanvaraisesti
+        #  Pelissä on näköesteenä erikokoisia laatikoita, jotka sijoitetaan huoneeseen sattumanvaraisesti
         #  Laatikot eivät saa olla liian lähellä reunoja.
         #  Koska robo.png on mitoiltaa suurin, käytetään sitä minimietäisyyden määrittelynä.
         #  Minimietäisyys = robon mitta + 10 px
@@ -132,7 +138,7 @@ class Ajojahti:
         self.morot = []
         self.uloskaynti = []
         self.aarre = []
-        morkoja = 3
+        morkoja = 2
 
         pelaaja_valmis = False
 
@@ -209,13 +215,6 @@ class Ajojahti:
             # Katsotaan reitti kohteen luo
             askeleet = max(abs(morko[2][0] - morko[0][0]), abs(morko[2][1] - morko[0][1]))
 
-            # uusi_x = morko[0][0] + float(morko[2][0] - morko[0][0]) / askeleet
-            # uusi_y = morko[0][1] + float(morko[2][1] - morko[0][1]) / askeleet
-
-            # tarkistettu_x, tarkistettu_y = self.osumakorjaus(self.hirvio.get_rect(topleft=[uusi_x, uusi_y]))
-
-            # morko[0][0] = tarkistettu_x
-            # morko[0][1] = tarkistettu_y
 
             if morko[1] or self.uloskaynti[1]:
                 nopeus = 2
@@ -232,24 +231,6 @@ class Ajojahti:
             self.osumakorjaus(morko)
 
 
-            # Varmistetaan, ettei mörkö törmää laatikkoon:
-
-            # osumakynnys = 3
-            # osumalaatikko = self.hirvio.get_rect(topleft=morko[0])
-
-            # for n in osumalaatikko.collidelistall(self.laatikot):
-            #     print("Törmäys")
-            #     if abs(self.laatikot[n].left - osumalaatikko.right) < osumakynnys:
-            #         morko[2][0] = self.laatikot[n].left - self.hirvio_mitat[0] - osumakynnys
-
-            #     if abs(self.laatikot[n].right - osumalaatikko.left) < osumakynnys:
-            #         morko[2][0] = self.laatikot[n].right + osumakynnys
-
-            #     if abs(self.laatikot[n].top - osumalaatikko.bottom) < osumakynnys:
-            #         morko[2][1] = self.laatikot[n].top - self.hirvio_mitat[1] - osumakynnys
-
-            #     if abs(self.laatikot[n].bottom - osumalaatikko.top) < osumakynnys:
-            #         morko[2][1] = self.laatikot[n].bottom + osumakynnys
 
 
     def katse(self, morko_sijainti: list):
@@ -273,63 +254,23 @@ class Ajojahti:
 
 
 
-                # if morko[2][1] - morko[0][1] < 0:
-                #     morko[2][1] = self.laatikot[n].top - osumalaatikko.h - osumakynnys * 2
-
-                # if morko[2][1] - morko[0][1] > 0:
-                #     morko[2][1] = self.laatikot[n].bottom + osumalaatikko.h + osumakynnys * 2
-
-                # else:
-                #     if abs(self.laatikot[n].top - morko[2][1]) >= abs(self.laatikot[n].bottom -morko[2][1]):
-                #         morko[2][1] = self.laatikot[n].top - osumalaatikko.h - osumakynnys * 2
-                #     else:
-                #         morko[2][1] = self.laatikot[n].bottom + osumalaatikko.h + osumakynnys * 2
-
-
             if abs(self.laatikot[n].right - osumalaatikko.left) < osumakynnys:
                 x = self.laatikot[n].right + osumakynnys
                 morko[2][1] = morko[0][1] + choice([10, -10])
 
-
-                # if morko[2][1] - morko[0][1] < 0:
-                #     morko[2][1] = self.laatikot[n].top - osumalaatikko.h - osumakynnys * 2
-
-                # if morko[2][1] - morko[0][1] > 0:
-                #     morko[2][1] = self.laatikot[n].bottom + osumalaatikko.h + osumakynnys * 2
-
-                # else:
-                #     if abs(self.laatikot[n].top - morko[2][1]) >= abs(self.laatikot[n].bottom -morko[2][1]):
-                #         morko[2][1] = self.laatikot[n].top - osumalaatikko.h - osumakynnys * 2
-                #     else:
-                #         morko[2][1] = self.laatikot[n].bottom + osumalaatikko.h + osumakynnys * 2
-
-
-
             if abs(self.laatikot[n].top - osumalaatikko.bottom) < osumakynnys:
                 y = self.laatikot[n].top - osumalaatikko.h - osumakynnys
                 morko[2][0] = morko[0][0] + choice([10, -10])
-                # if morko[2][0] - morko[0][0] > 0:
-                #     morko[2][0] = self.laatikot[n].right + osumalaatikko.w + osumakynnys *2
-                # else:
-                #     morko[2][0] = self.laatikot[n].left - osumalaatikko.w - osumakynnys * 2
 
 
             if abs(self.laatikot[n].bottom - osumalaatikko.top) < osumakynnys:
                 y = self.laatikot[n].bottom + osumakynnys
                 morko[2][0] = morko[0][0] + choice([10, -10])
-                # if morko[2][0] - morko[0][0] > 0:
-                #     morko[2][0] = self.laatikot[n].right + osumalaatikko.w + osumakynnys * 2
-                # else:
-                #     morko[2][0] = self.laatikot[n].left - osumalaatikko.w - osumakynnys * 2
 
         morko[0][0] = x
         morko[0][1] = y
 
-
         return morko
-    
-
-
 
     def tarkista(self):
 
