@@ -1,3 +1,6 @@
+# Ajojahti
+# Lähdekoodi: https://github.com/jukper/ajojahti
+
 import pygame
 from random import randrange, choice
 from math import sqrt
@@ -20,12 +23,14 @@ class Ajojahti:
         self.luo_laatikot()
         self.luo_hahmot()
         self.pisteet = 0
+        self.pelikerrat = []
         # self.tarkista()
         # self.liiku()
         # self.piirra()
         self.valot_paalla = False
         self.aarre_loydetty = False
         self.fontti = pygame.font.SysFont("Arial", 24)
+        self.otsikkofontti = pygame.font.SysFont("Arial", 40, True)
         pygame.display.set_caption("Ajojahti!")
         self.aloitusruutu()
         self.silmukka()
@@ -34,10 +39,27 @@ class Ajojahti:
         aloita = False
         lopeta = False
         komento_ok = False
+        otsikko = self.otsikkofontti.render("AJOJAHTI", True, (255, 0, 0))
+        ohje1 = self.fontti.render("1. Etsi kätketty aarre", True, (255, 0, 0))
+        ohje2 = self.fontti.render("2. Pakene huoneesta", True, (255, 0, 0))
+        ohje3 = self.fontti.render("3. Älä jää kiinni", True, (255, 0, 0))
+        x = -100
+        y = 100
+        teksti = self.fontti.render("F2: Aloita peli. ESC: lopeta peli", True, (255, 0, 0))
         while not komento_ok:
             self.naytto.fill((0, 0, 0))
-            teksti = self.fontti.render("F2: Aloita peli. ESC: lopeta peli", True, (255, 0, 0))
-            self.naytto.blit(teksti, (self.leveys / 2 - teksti.get_width() / 2, self.korkeus / 2 - teksti.get_height() / 2))
+            self.naytto.blit(self.robo, (x, y))
+            self.naytto.blit(self.hirvio, (x -200, y))
+            self.naytto.blit(otsikko, (self.leveys / 2 - otsikko.get_width() / 2, 20))
+
+            self.naytto.blit(ohje1, (self.leveys / 2 - ohje1.get_width() / 2, 250))
+            self.naytto.blit(ohje2, (self.leveys / 2 - ohje1.get_width() / 2, 300))
+            self.naytto.blit(ohje3, (self.leveys / 2 - ohje1.get_width() / 2, 350))
+
+            self.naytto.blit(teksti, (self.leveys / 2 - teksti.get_width() / 2, 500))
+
+            # self.naytto.blit(teksti, (self.leveys / 2 - teksti.get_width() / 2, self.korkeus / 2 - teksti.get_height() / 2))
+            # self.naytto.blit(teksti, (self.leveys / 2 - teksti.get_width() / 2, self.korkeus / 2 - teksti.get_height() / 2))
             for tapahtuma in pygame.event.get():
                 if tapahtuma.type == pygame.QUIT:
                     exit()
@@ -49,6 +71,11 @@ class Ajojahti:
                         lopeta = True
                         komento_ok = True
             pygame.display.flip()
+            x += 5
+            if x > self.leveys + 300:
+                x = -100
+            self.kello.tick(60)
+
         if aloita:
             return
         if lopeta:
@@ -57,10 +84,35 @@ class Ajojahti:
     def uusi_peli(self):
         aloita = False
         lopeta = False
+        ennatys = False
+        tulostaulukko = self.pelikerrat.copy()
+        tulostaulukko.sort(reverse=True)
+        pisteet = []
+        for n in range(len(tulostaulukko)):
+            if n > 2:
+                break
+            if tulostaulukko[n] != 1:
+                pisteet.append(self.fontti.render(f'{n + 1}. sija: {tulostaulukko[n]} pistettä', True, (255, 0, 0)))
+            else:
+                pisteet.append(self.fontti.render(f'{n + 1}. sija: {tulostaulukko[n]} piste', True, (255, 0, 0)))
+
+        if len(self.pelikerrat) > 0 and 0 < self.pisteet > max(self.pelikerrat):
+            ennatys = True
+        self.pelikerrat.append(self.pisteet)
         komento_ok = False
         while not komento_ok:
             self.naytto.fill((0, 0, 0))
-            teksti1 = self.fontti.render(f'Jäit kiinni. Pistemääräsi: {self.pisteet}', True, (255, 0, 0))
+
+            if ennatys:
+                teksti1 = self.fontti.render(f'Jäit kiinni. Pistemääräsi: {self.pisteet} (UUSI ENNÄTYS!)', True, (255, 0, 0))
+            else:
+                teksti1 = self.fontti.render(f'Jäit kiinni. Pistemääräsi: {self.pisteet}', True, (255, 0, 0))
+
+            pistevali = 30
+            for piste in pisteet:
+                self.naytto.blit(piste, (self.leveys / 2 - piste.get_width() / 2, 450 + pistevali))
+                pistevali += 30
+
             teksti2 = self.fontti.render("F2: Uusi peli. ESC: lopeta peli", True, (255, 0, 0))
             self.naytto.blit(teksti1, (self.leveys / 2 - teksti1.get_width() / 2, self.korkeus / 2 - (teksti1.get_height() + 10 + teksti2.get_height()) / 2 ))
             self.naytto.blit(teksti2, (self.leveys / 2 - teksti2.get_width() / 2, self.korkeus / 2 - teksti2.get_height() / 2 + 20))
@@ -225,13 +277,9 @@ class Ajojahti:
             morko[0][1] += float(morko[2][1] - morko[0][1]) / askeleet * nopeus
 
 
-
-            ## Ei törmätä laatikkoon
+            # Ei törmätä laatikkoon
 
             self.osumakorjaus(morko)
-
-
-
 
     def katse(self, morko_sijainti: list):
         robon_piste = [self.pelaaja[0][0] + self.robo_nakopiste[0], self.pelaaja[0][1] + self.robo_nakopiste[1]]
@@ -288,14 +336,16 @@ class Ajojahti:
                 self.pisteet += 1
                 self.uusi_huone()
 
-
         nahty = 0
         for morko in self.morot:
-            
+
             # Onko robo napattu?
             if self.hirvio.get_rect(topleft=morko[0]).colliderect(self.robo.get_rect(topleft=self.pelaaja[0])):
                 print("Peli loppui!")
                 self.uusi_peli()
+
+            # Näkeekö mörkö robon?
+
             morko[1] = False
             osumia = False
             katsevektori = self.katse(morko[0])
