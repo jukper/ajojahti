@@ -5,6 +5,7 @@ import pygame
 from random import randrange, choice
 from math import sqrt
 
+
 class Ajojahti:
     def __init__(self):
         pygame.init()
@@ -24,9 +25,6 @@ class Ajojahti:
         self.luo_hahmot()
         self.pisteet = 0
         self.pelikerrat = []
-        # self.tarkista()
-        # self.liiku()
-        # self.piirra()
         self.valot_paalla = False
         self.aarre_loydetty = False
         self.fontti = pygame.font.SysFont("Arial", 24)
@@ -49,7 +47,7 @@ class Ajojahti:
         while not komento_ok:
             self.naytto.fill((0, 0, 0))
             self.naytto.blit(self.robo, (x, y))
-            self.naytto.blit(self.hirvio, (x -200, y))
+            self.naytto.blit(self.hirvio, (x - 200, y))
             self.naytto.blit(otsikko, (self.leveys / 2 - otsikko.get_width() / 2, 20))
 
             self.naytto.blit(ohje1, (self.leveys / 2 - ohje1.get_width() / 2, 250))
@@ -58,8 +56,6 @@ class Ajojahti:
 
             self.naytto.blit(teksti, (self.leveys / 2 - teksti.get_width() / 2, 500))
 
-            # self.naytto.blit(teksti, (self.leveys / 2 - teksti.get_width() / 2, self.korkeus / 2 - teksti.get_height() / 2))
-            # self.naytto.blit(teksti, (self.leveys / 2 - teksti.get_width() / 2, self.korkeus / 2 - teksti.get_height() / 2))
             for tapahtuma in pygame.event.get():
                 if tapahtuma.type == pygame.QUIT:
                     exit()
@@ -83,7 +79,6 @@ class Ajojahti:
 
     def uusi_peli(self):
         aloita = False
-        lopeta = False
         ennatys = False
         tulostaulukko = self.pelikerrat.copy()
         tulostaulukko.sort(reverse=True)
@@ -99,8 +94,7 @@ class Ajojahti:
         if len(self.pelikerrat) > 0 and 0 < self.pisteet > max(self.pelikerrat):
             ennatys = True
         self.pelikerrat.append(self.pisteet)
-        komento_ok = False
-        while not komento_ok:
+        while not aloita:
             self.naytto.fill((0, 0, 0))
 
             if ennatys:
@@ -122,30 +116,21 @@ class Ajojahti:
                 if tapahtuma.type == pygame.KEYDOWN:
                     if tapahtuma.key == pygame.K_F2:
                         aloita = True
-                        komento_ok = True
                     if tapahtuma.key == pygame.K_ESCAPE:
-                        lopeta = True
-                        komento_ok = True
+                        exit()
             pygame.display.flip()
-        if aloita:
-            self.oikealle = False
-            self.vasemmalle = False
-            self.ylos = False
-            self.alas = False
-            self.pisteet = 0
-            self.uusi_huone()
-        if lopeta:
-            exit()
-
-
+        self.oikealle = False
+        self.vasemmalle = False
+        self.ylos = False
+        self.alas = False
+        self.pisteet = 0
+        self.uusi_huone()
 
     def uusi_huone(self):
-        print("pisteitä:", self.pisteet)
         self.valot_paalla = False
         self.aarre_loydetty = False
         self.luo_laatikot()
         self.luo_hahmot()
-
 
     def lataa_kuvat(self):
         self.hirvio = pygame.image.load("hirvio.png")
@@ -156,7 +141,8 @@ class Ajojahti:
         self.kolikko_mitat = (self.kolikko.get_width(), self.kolikko.get_height())
         self.ovi = pygame.image.load("ovi.png")
         self.ovi_mitat = (self.ovi.get_width(), self.ovi.get_height())
-        # Pelihahmoja varten määritellään offset, jolla lasketaan ne pisteet, joista möröt katsovat ja jonka ne robossa näkevät
+
+        # Pelihahmoja varten määritellään näköpisteet, joista möröt katsovat ja joista robo nähdään.
         self.robo_nakopiste = (self.robo_mitat[0] / 2, self.robo_mitat[1] / 2)
         self.morko_nakopiste = (self.hirvio_mitat[0] / 2, 14)
 
@@ -165,16 +151,19 @@ class Ajojahti:
 
         #  Pelissä on näköesteenä erikokoisia laatikoita, jotka sijoitetaan huoneeseen sattumanvaraisesti
         #  Laatikot eivät saa olla liian lähellä reunoja.
-        #  Koska robo.png on mitoiltaa suurin, käytetään sitä minimietäisyyden määrittelynä.
+        #  Koska robo.png on mitoiltaan suurin, käytetään sitä minimietäisyyden määrittelyyn.
         #  Minimietäisyys = robon mitta + 10 px
 
         # Laatikon pituus määritellään omalla mitalla, joka on näytön leveys / 16
 
         mitta = self.leveys / 16
-        vara = (self.robo_mitat[0] + 10, self.robo_mitat[1] + 1)
+        vara = (self.robo_mitat[0] + 10, self.robo_mitat[1] + 10)
         self.laatikot = []
         laatikot_mitat = [ (3, 2), (2, 4), (1, 1), (3,0.5), (0.5, 4), (1.5, 1.5)]
 
+
+        # Luodaan laatikot ja varmistetaan niiden väljyys luomalla ne aluksi kaksinkertaiseksi.
+        # Kun kaksinkertaiset laatikot on sijoitettu näytolle, ne pienennetään oikeaan kokoon.
         for n in range(len(laatikot_mitat)):
             while len(self.laatikot) < n + 1:
                 laatikko = pygame.Rect(randrange(0, self.leveys), randrange(0, self.korkeus), mitta * laatikot_mitat[n][0] + vara[0] * 2, mitta * laatikot_mitat[n][1] + vara[1] * 2)
@@ -195,32 +184,40 @@ class Ajojahti:
         pelaaja_valmis = False
 
         while not pelaaja_valmis:
-            # Luodaan robon mittojen mukainen tilapäinen laatikko ja varmistetaan, ettei se ole minkään neliön sisällä
+
+            # Luodaan robon mittojen mukainen tilapäinen laatikko ja varmistetaan,
+            # ettei se ole minkään neliön sisällä
+
             x = randrange(0, self.leveys - self.robo_mitat[0])
             y = randrange(0, self.korkeus - self.robo_mitat[1])
             if not pygame.Rect(x, y, self.robo_mitat[0], self.robo_mitat[1]).collidelistall(self.laatikot):
-                    self.pelaaja = [[x, y], False]  # Robon tiedot sisältävät sijainnin sekä keskipisteen, josta mitataan, onko möröillä näköyhteys roboon.
+                    self.pelaaja = [[x, y], False]  # Robon tiedot sisältävät sijainnin sekä tiedon, onko robo havaittu (False = ei havaittu, True = havaittu)
                     pelaaja_valmis = True
 
         while len(self.morot) < morkoja:
             x = randrange(0, self.leveys - self.hirvio_mitat[0])
             y = randrange(0, self.korkeus - self.hirvio_mitat[1])
 
+            # Tarkistetaan, ettei mörkö päädy leikkaamaan laatikon kanssa
             if not pygame.Rect(x, y, self.hirvio_mitat[0], self.hirvio_mitat[1]).collidelistall(self.laatikot):
 
+                # Varmistetaan, ettei alussa mörkö näe roboa.
+                # Robon suunnatun katseen täytyy osua vähintään yhteen laatikkoon.
                 osumia = False
                 for laatikko in self.laatikot:
                     if laatikko.clipline(self.katse([x, y])):
                         osumia = True
                         break
                 if osumia:
-                    self.morot.append([[x, y], False, self.etsi([x, y])])  # Tallennetaan möröistä sijainti, näön lähtöpiste sekä viimeisenä tieto, onko mörkö havainnut robon (True = näkee, False = ei näe)
+                    self.morot.append([[x, y], False, self.etsi([x, y])])  # Tallennetaan möröistä sijainti, sekä tieto, onko mörkö havainnut robon (True = näkee, False = ei näe)
 
         aarre_valmis = False
         while not aarre_valmis:
             x = randrange(0, self.leveys - self.kolikko_mitat[0])
             y = randrange(0, self.korkeus - self.kolikko_mitat[1])
-            if not self.kolikko.get_rect(topleft=[x, y]).collidelistall(self.laatikot):
+
+            # Aarre ei saa leikata laatikon kanssa eikä robon kanssa.
+            if not self.kolikko.get_rect(topleft=[x, y]).collidelistall(self.laatikot) and not self.kolikko.get_rect(topleft=[x, y]).colliderect(self.robo.get_rect(topleft=self.pelaaja[0])):
                 self.aarre.append([x, y])
                 aarre_valmis = True
 
@@ -233,10 +230,10 @@ class Ajojahti:
                 self.uloskaynti.append(False)
                 uloskaynti_valmis = True
 
-
     def liiku(self):
 
         # Ensin pelaajan liike
+        # Varmistetaan myös, ettei robo liiku laatikon sisään
 
         if self.oikealle and self.pelaaja[0][0] + self.robo_mitat[0] + self.robonopeus <= self.leveys:
             if self.robo.get_rect(topleft=[self.pelaaja[0][0] + self.robonopeus, self.pelaaja[0][1]]).collidelist(self.laatikot) < 0:
@@ -267,7 +264,6 @@ class Ajojahti:
             # Katsotaan reitti kohteen luo
             askeleet = max(abs(morko[2][0] - morko[0][0]), abs(morko[2][1] - morko[0][1]))
 
-
             if morko[1] or self.uloskaynti[1]:
                 nopeus = 2
             else:
@@ -275,7 +271,6 @@ class Ajojahti:
 
             morko[0][0] += float(morko[2][0] - morko[0][0]) / askeleet * nopeus
             morko[0][1] += float(morko[2][1] - morko[0][1]) / askeleet * nopeus
-
 
             # Ei törmätä laatikkoon
 
@@ -286,12 +281,15 @@ class Ajojahti:
         moron_piste = [morko_sijainti[0] + self.morko_nakopiste[0], morko_sijainti[1] + self.morko_nakopiste[1]]
         return [robon_piste, moron_piste]
 
-
     def osumakorjaus(self, morko: list):
 
         osumalaatikko = self.hirvio.get_rect(topleft=morko[0])
 
-        osumakynnys = 5
+        # Mörköjen liike määräytyy niiden sekä kohteiden välisen kulman mukaan.
+        # Tästä syystä mörköjen x ja y sijainnit muuttuvat epätasaisesti.
+        # Jotta varmistetaan, ettei mörkö yhden kuvan aikana siirry osittain laatikon sisälle,
+        # määritellään osuman havaitsemiseen tarpeeksi iso osumakynnys.
+        osumakynnys = 5 
         x = osumalaatikko.x
         y = osumalaatikko.y
 
@@ -328,7 +326,6 @@ class Ajojahti:
             if self.robo.get_rect(topleft=self.pelaaja[0]).colliderect(self.kolikko.get_rect(topleft=self.aarre[0])):
                 self.aarre.pop(0)
                 self.uloskaynti[1] = True
-                print("Kolikko saatu! Sitten ulko-ovelle.")
 
         # Onko pelaaja päässyt ovelle saatuaan aarteen?
         if self.uloskaynti[1]:
@@ -341,7 +338,6 @@ class Ajojahti:
 
             # Onko robo napattu?
             if self.hirvio.get_rect(topleft=morko[0]).colliderect(self.robo.get_rect(topleft=self.pelaaja[0])):
-                print("Peli loppui!")
                 self.uusi_peli()
 
             # Näkeekö mörkö robon?
@@ -359,17 +355,11 @@ class Ajojahti:
             if not osumia and sqrt((katsevektori[0][0] - katsevektori[1][0]) ** 2 + (katsevektori[0][1] - katsevektori[1][1]) ** 2) < self.korkeus / 2:
                 morko[1] = True
                 nahty += 1
-            # print("Näkeekö mörkö: ", morko[4])
-
 
         if nahty > 0:
             self.pelaaja[1] = True
         else:
             self.pelaaja[1] = False
-
-
-        # Tarkistetaan, ettei kukaan liiku ikkunan ulkopuolelle
-
 
 
     def valot(self):
@@ -383,39 +373,31 @@ class Ajojahti:
             self.valot_paalla = True
         else:
             self.valot_paalla = False
-        # for morko in self.morot:
-        #     if morko[4]:
-        #         self.valot_paalla = True
-        #         break
-
 
     def piirra(self):
-            if self.valot_paalla:
-                self.naytto.fill((255, 255, 255))
-                if len(self.aarre) > 0:
-                    self.naytto.blit(self.kolikko, self.aarre[0])
-                self.naytto.blit(self.ovi, self.uloskaynti[0])
-            else:
-                self.naytto.fill((0, 0, 0))
-            for laatikko in self.laatikot:
-                pygame.draw.rect(self.naytto, (255, 0, 0), laatikko)
-            self.naytto.blit(self.robo, (self.pelaaja[0][0], self.pelaaja[0][1]))
-            for morko in self.morot:
-                self.naytto.blit(self.hirvio, (morko[0][0], morko[0][1]))
-                if morko[1]:
-                    viiva = self.katse(morko[0])
-                    pygame.draw.line(self.naytto, (255, 0, 0), viiva[0], viiva[1])
-            teksti1 = self.fontti.render(f'Pisteitä: {self.pisteet}', True, (255, 0, 0))
+        if self.valot_paalla:
+            self.naytto.fill((255, 255, 255))
+            if len(self.aarre) > 0:
+                self.naytto.blit(self.kolikko, self.aarre[0])
+            self.naytto.blit(self.ovi, self.uloskaynti[0])
+        else:
+            self.naytto.fill((0, 0, 0))
+        for laatikko in self.laatikot:
+            pygame.draw.rect(self.naytto, (255, 0, 0), laatikko)
+        self.naytto.blit(self.robo, (self.pelaaja[0][0], self.pelaaja[0][1]))
+        for morko in self.morot:
+            self.naytto.blit(self.hirvio, (morko[0][0], morko[0][1]))
+            if morko[1]:
+                viiva = self.katse(morko[0])
+                pygame.draw.line(self.naytto, (255, 0, 0), viiva[0], viiva[1])
+        teksti1 = self.fontti.render(f'Pisteitä: {self.pisteet}', True, (255, 0, 0))
 
-            if self.uloskaynti[1]:
-                teksti2 = self.fontti.render(f'Pakene huoneesta!', True, (255, 0, 0))
-            else:
-                teksti2 = self.fontti.render(f'Etsi aarre.', True, (255, 0, 0))
-            self.naytto.blit(teksti1, (self.leveys - teksti1.get_width(), 0))
-            self.naytto.blit(teksti2, (self.leveys - teksti2.get_width(), self.korkeus - teksti2.get_height()))
-
-                # print(f'Mörön sijainti: {morko[0]}, mörön kohde{morko[2]}')
-
+        if self.uloskaynti[1]:
+            teksti2 = self.fontti.render(f'Pakene huoneesta!', True, (255, 0, 0))
+        else:
+            teksti2 = self.fontti.render(f'Etsi aarre.', True, (255, 0, 0))
+        self.naytto.blit(teksti1, (self.leveys - teksti1.get_width(), 0))
+        self.naytto.blit(teksti2, (self.leveys - teksti2.get_width(), self.korkeus - teksti2.get_height()))
 
     def etsi(self, sijainti: list):
         ok = False
@@ -430,18 +412,12 @@ class Ajojahti:
                 ok = True
         return [x, y]
 
-
     def silmukka(self):
         while True:
             for tapahtuma in pygame.event.get():
                 if tapahtuma.type == pygame.QUIT:
                     exit()
                 if tapahtuma.type == pygame.KEYDOWN:
-                    if tapahtuma.key == pygame.K_SPACE:
-                        if self.valot_paalla:
-                            self.valot_paalla = False
-                        else:
-                            self.valot_paalla = True
 
                     if tapahtuma.key == pygame.K_LEFT:
                         self.vasemmalle = True
@@ -476,5 +452,6 @@ class Ajojahti:
 
             pygame.display.flip()
             self.kello.tick(60)
+
 
 peli = Ajojahti()
