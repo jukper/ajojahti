@@ -1,6 +1,11 @@
 # Ajojahti
 # Lähdekoodi: https://github.com/jukper/ajojahti
 
+# Korjattavia asioita:
+# 1. Joskus huone ei generoidu, koska laatikot eivät sijoitu sinne oikein. Peli pysähtyy kokonaan.
+# 2. Kerran olen törmännyt huoneeseen, jossa robo ei mahtunut kulkemana laatikoiden välissä
+# 3. Peli kaatuu sattumanvaraisesti. Todennäköisesti liittyy kohtaan 1. Kaatuminen on tapahtunut, kun huoneesta on poistuttu.
+
 import pygame
 from random import randrange, choice
 from math import sqrt
@@ -179,7 +184,7 @@ class Ajojahti:
         self.morot = []
         self.uloskaynti = []
         self.aarre = []
-        morkoja = 2
+        morkoja = 3
 
         pelaaja_valmis = False
 
@@ -296,22 +301,22 @@ class Ajojahti:
         for n in osumalaatikko.collidelistall(self.laatikot):
             if abs(self.laatikot[n].left - osumalaatikko.right) < osumakynnys:
                 x = self.laatikot[n].left - osumalaatikko.w - osumakynnys
-                morko[2][1] = morko[0][1] + choice([10, -10])
+                morko[2][1] = morko[0][1] + choice([20, -20])
 
 
 
             if abs(self.laatikot[n].right - osumalaatikko.left) < osumakynnys:
                 x = self.laatikot[n].right + osumakynnys
-                morko[2][1] = morko[0][1] + choice([10, -10])
+                morko[2][1] = morko[0][1] + choice([20, -20])
 
             if abs(self.laatikot[n].top - osumalaatikko.bottom) < osumakynnys:
                 y = self.laatikot[n].top - osumalaatikko.h - osumakynnys
-                morko[2][0] = morko[0][0] + choice([10, -10])
+                morko[2][0] = morko[0][0] + choice([20, -20])
 
 
             if abs(self.laatikot[n].bottom - osumalaatikko.top) < osumakynnys:
                 y = self.laatikot[n].bottom + osumakynnys
-                morko[2][0] = morko[0][0] + choice([10, -10])
+                morko[2][0] = morko[0][0] + choice([20, -20])
 
         morko[0][0] = x
         morko[0][1] = y
